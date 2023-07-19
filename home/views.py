@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
-from . models import User
-from . serializers import UserSerializer
+from . models import User, DocterModel
+from . serializers import UserSerializer,DocterSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
@@ -14,12 +14,14 @@ class RegisterView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
+            username = serializer.validated_data.get('username')
             name = serializer.validated_data.get('name')
             email = serializer.validated_data.get('email')
             password = serializer.validated_data.get('password')
             hashed_password = make_password(password)
             
             user = User.objects.create(
+                username = username,
                 name = name,
                 email = email,
                 password = hashed_password
@@ -28,6 +30,7 @@ class RegisterView(APIView):
             return Response(UserSerializer(user).data,status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
@@ -62,6 +65,7 @@ class LoginView(APIView):
         return response
 
 
+
 class Userview(APIView):
 
     def get(self, request):
@@ -79,6 +83,7 @@ class Userview(APIView):
         return Response(serializer.data)
            
 
+
 class LogOutView(APIView):
     def post(self, request):
         response = Response()
@@ -89,3 +94,70 @@ class LogOutView(APIView):
         }
 
         return response
+
+
+
+class UserDeleteView(APIView):
+    def get_object(self, username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            raise Response('User doesent exist')
+        
+
+    def delete(self, request, username):
+        user = self.get_object(username)
+        user.delete()
+        return Response('user was deleted')
+
+
+
+class DocterRegisterview(APIView):
+    def post(self, request):
+        serializer = DocterSerializer(data=request.data)
+        if serializer.is_valid():
+            name = serializer.validated_data.get('name')
+            place =  serializer.validated_data.get('place')
+            age = serializer.validated_data.get('age')
+            spec = serializer.validated_data.get('spec')
+            email = serializer.validated_data.get('email')
+
+
+            docter = DocterModel.objects.create(
+                name = name,
+                place = place,
+                age = age,
+                spec = spec,
+                email = email
+            )
+
+            return Response(DocterSerializer(docter).data,status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+    def get(self, request):
+        docters = DocterModel.objects.all()
+        serializer = DocterSerializer(docters, many=True)
+        return Response(serializer.data,status=status.HTTP_200_OK)
+    
+
+    def put(self, request, email):
+        try:
+            docter = DocterModel.objects.get(email=email)
+        except DocterModel.DoesNotExist:
+            return Response({"detail": "Doctor with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DocterSerializer(docter, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    def delete(self, request, email):
+        docter = DocterModel.objects.get(email=email) 
+        docter.delete()
+        return Response("Docter was deleted",status=status.HTTP_200_OK)
