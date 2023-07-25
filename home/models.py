@@ -23,6 +23,7 @@ class DocterModel(models.Model):
     age = models.IntegerField()
     spec = models.CharField(max_length=200)
     email = models.EmailField(unique=True,null=True)
+    blocked = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

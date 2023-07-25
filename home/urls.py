@@ -9,8 +9,9 @@ urlpatterns = [
     path('logout/', LogOutView.as_view()),
     path('delete/<str:username>/', UserDeleteView.as_view()),
     path('docterRegistration/', DocterRegisterview.as_view()),
-    path('docterRegistration/<str:email>', DocterRegisterview.as_view()),
-
-
+    path('docteredit/<str:email>/', DocterRegisterview.as_view()),
+    path('docterdelete/<str:email>/', DocterRegisterview.as_view()),
+    path('doctersblocking/<str:email>/', DocterRegisterview.as_view(), name='doctors-block'),
+    
 
 ]

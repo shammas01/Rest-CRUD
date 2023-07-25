@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from . models import User,DocterModel
-from django.contrib.auth.hashers import make_password
+from . models import User, DocterModel
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,8 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 
-
 class DocterSerializer(serializers.ModelSerializer):
     class Meta:
         model = DocterModel
-        fields = ['id','name','place','age','spec','email']
+        fields = ['id','name','place','age','spec','email','blocked']

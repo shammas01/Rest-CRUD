@@ -6,7 +6,7 @@ from rest_framework import status
 from django.contrib.auth.hashers import make_password
 from rest_framework.exceptions import AuthenticationFailed
 import jwt, datetime
-
+from rest_framework import generics
 
 # Create your views here.
 
@@ -112,6 +112,7 @@ class UserDeleteView(APIView):
 
 
 
+
 class DocterRegisterview(APIView):
     def post(self, request):
         serializer = DocterSerializer(data=request.data)
@@ -136,11 +137,13 @@ class DocterRegisterview(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+
     def get(self, request):
         docters = DocterModel.objects.all()
         serializer = DocterSerializer(docters, many=True)
         return Response(serializer.data,status=status.HTTP_200_OK)
     
+
 
     def put(self, request, email):
         try:
@@ -161,3 +164,26 @@ class DocterRegisterview(APIView):
         docter = DocterModel.objects.get(email=email) 
         docter.delete()
         return Response("Docter was deleted",status=status.HTTP_200_OK)
+    
+
+
+    def patch(self, request, email):
+        try:
+            docter = DocterModel.objects.get(email=email)
+        except DocterModel.DoesNotExist:
+            return Response({"detail": "Doctor with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        action = request.query_params.get('action', None)
+        if action not in ['block', 'unblock']:
+            return Response({"detail": "Invalid action. Use 'block' or 'unblock' as the query parameter."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == 'block':
+            docter.blocked = True
+        elif action == 'unblock':
+            docter.blocked = False
+
+        docter.save()
+
+        return Response(DocterSerializer(docter).data, status=status.HTTP_200_OK)
+
+
