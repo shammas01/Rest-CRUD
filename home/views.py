@@ -135,19 +135,30 @@ class DocterRegisterview(APIView):
             return Response(DocterSerializer(docter).data,status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+
+    def get(self,request):
+        docter = DocterModel.objects.all()
+        serializer = DocterSerializer(docter,many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
-    def get(self, request):
-        docters = DocterModel.objects.all()
-        serializer = DocterSerializer(docters, many=True)
-        return Response(serializer.data,status=status.HTTP_200_OK)
+class DocterDetail(APIView):
+    def get(self, request, id):
+        try:
+            docter = DocterModel.objects.get(id=id)
+            serializer = DocterSerializer(docter)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except DocterModel.DoesNotExist:
+            return Response({'message': 'Doctor not found.'}, status=status.HTTP_404_NOT_FOUND)
     
 
 
-    def put(self, request, email):
+class DocterEdit(APIView):
+    def put(self, request, id):
         try:
-            docter = DocterModel.objects.get(email=email)
+            docter = DocterModel.objects.get(id=id)
         except DocterModel.DoesNotExist:
             return Response({"detail": "Doctor with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -158,18 +169,12 @@ class DocterRegisterview(APIView):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-    def delete(self, request, email):
-        docter = DocterModel.objects.get(email=email) 
-        docter.delete()
-        return Response("Docter was deleted",status=status.HTTP_200_OK)
     
 
-
-    def patch(self, request, email):
+class Doctorblock(APIView):
+    def patch(self, request, id):
         try:
-            docter = DocterModel.objects.get(email=email)
+            docter = DocterModel.objects.get(id=id)
         except DocterModel.DoesNotExist:
             return Response({"detail": "Doctor with this email does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -187,3 +192,9 @@ class DocterRegisterview(APIView):
         return Response(DocterSerializer(docter).data, status=status.HTTP_200_OK)
 
 
+
+class DocterDelete(APIView):
+    def delete(self, request, id):
+        docter = DocterModel.objects.get(id=id) 
+        docter.delete()
+        return Response("Docter was deleted",status=status.HTTP_200_OK)
