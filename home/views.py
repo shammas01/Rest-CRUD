@@ -1,14 +1,13 @@
 from rest_framework.views import APIView
-from . models import CustomUser, DocterModel
-from . serializers import UserSerializer,DocterSerializer,UserLoginSerializer
+from . models import User, DocterModel
+from . serializers import UserSerializer,DocterSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from django.contrib.auth.hashers import make_password
 from rest_framework.exceptions import AuthenticationFailed
-from django.contrib.auth import authenticate
 import jwt, datetime
-from . tokens import get_tokens_for_user
-
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
@@ -22,69 +21,50 @@ class RegisterView(APIView):
             password = serializer.validated_data.get('password')
             hashed_password = make_password(password)
             
-            user = CustomUser.objects.create(
+            user = User.objects.create(
                 username = username,
                 name = name,
                 email = email,
                 password = hashed_password
             )
 
-            token = get_tokens_for_user(user)
-
-            return Response({'msg':'Registeration Successfull','token':token},status=status.HTTP_201_CREATED)
+            return Response(UserSerializer(user).data,status=status.HTTP_200_OK)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
 
-# class LoginView(APIView):
-#     def post(self, request):
-
-#         email = request.data['email']
-#         password = request.data['password']
-
-#         user = User.objects.filter(email=email).first()
-
-#         if user is None:
-#             raise AuthenticationFailed('User Not Found!')
-#         if not user.check_password(password):
-#             raise AuthenticationFailed('invalid password!')
-        
-#         payload = {
-#             'id' : user.id,
-#             'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
-#             'iat' : datetime.datetime.utcnow()
-#         }
-        
-#         token = jwt.encode(payload, 'secret', algorithm='HS256')
-
-#         response = Response()
-#         response.set_cookie(key='jwt', value=token, httponly=True)
-#         response.data = {
-#             'messege':"login successfull",
-#             'jwt' : token
-
-#         }
-
-#         return response
-
-
-
 class LoginView(APIView):
-    def post(self, request, format=None):
-        serializer = UserLoginSerializer(data=request.data) 
-        if serializer.is_valid():
-            email = serializer.data.get('email') 
-            password = serializer.data.get('password')
-            user = authenticate(request, email=email, password=password)
-            if user is not None:
-                token = get_tokens_for_user(user)
-                return Response({'msg': 'Login Success', 'token': token}, status=status.HTTP_200_OK)
-                    
-        return Response({'msg': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    def post(self, request):
 
+        email = request.data['email']
+        password = request.data['password']
 
+        user = User.objects.filter(email=email).first()
+
+        if user is None:
+            raise AuthenticationFailed('User Not Found!')
+        if not user.check_password(password):
+            raise AuthenticationFailed('invalid password!')
+        
+        payload = {
+            'id' : user.id,
+            'exp' : datetime.datetime.utcnow() + datetime.timedelta(minutes=60),
+            'iat' : datetime.datetime.utcnow()
+        }
+        
+        token = jwt.encode(payload, 'secret', algorithm='HS256')
+
+        response = Response()
+        response.set_cookie(key='jwt', value=token, httponly=True)
+        response.data = {
+            'messege':"login successfull",
+            'jwt' : token
+
+        }
+
+        return response
 
 
 
@@ -99,7 +79,7 @@ class Userview(APIView):
         except jwt.ExpiredSignatureError:
             raise AuthenticationFailed('Unauthenticated')
         
-        user = CustomUser.objects.filter(id=playload['id']).first()
+        user = User.objects.filter(id=playload['id']).first()
         serializer = UserSerializer(user)
         return Response(serializer.data)
            
@@ -121,8 +101,8 @@ class LogOutView(APIView):
 class UserDeleteView(APIView):
     def get_object(self, username):
         try:
-            return CustomUser.objects.get(username=username)
-        except CustomUser.DoesNotExist:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
             raise Response('User doesent exist')
         
 
