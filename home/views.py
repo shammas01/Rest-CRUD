@@ -199,3 +199,6 @@ class DocterDelete(APIView):
         docter = DocterModel.objects.get(id=id) 
         docter.delete()
         return Response("Docter was deleted",status=status.HTTP_200_OK)
+
+
+
